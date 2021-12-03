@@ -2,7 +2,6 @@
 
 using System;
 using System.IO;
-using System.Linq;
 
 var lines = await File.ReadAllLinesAsync("input");
 

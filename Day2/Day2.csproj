@@ -8,9 +8,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <None Update="input">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
+        <None Update="input">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
 </Project>
