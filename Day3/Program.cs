@@ -50,7 +50,7 @@ int LifeSupportSelector(IList<int> candidates, LifeSupportVariant variant)
             default:
                 throw new ArgumentOutOfRangeException(nameof(variant), variant, null);
         }
-        
+
         candidates = candidates.Where(n => ((n >> discriminantBit) & 1) == criteria)
             .ToList();
         discriminantBit -= 1;
@@ -64,7 +64,7 @@ var co2 = LifeSupportSelector(allNumbers, LifeSupportVariant.Co2);
 
 Console.WriteLine($"Part 2 - Oxygen: {oxygen}, CO2: {co2}, Answer: {oxygen * co2}");
 
-enum LifeSupportVariant
+internal enum LifeSupportVariant
 {
     Oxygen,
     Co2,
