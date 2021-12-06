@@ -20,7 +20,7 @@ internal class Population
 {
     private readonly List<long> _fish = new() { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-    public long Count => _fish.Aggregate<long, long>(0, (current, p) => current + p);
+    public long Count => _fish.Sum();
 
     public void Set(int age, int amount)
     {
