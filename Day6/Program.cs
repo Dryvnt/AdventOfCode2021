@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Numerics;
 
 var input = File.ReadAllText("input");
 
@@ -19,9 +18,9 @@ Console.WriteLine($"Part 2: {pop.Count}");
 
 internal class Population
 {
-    private readonly List<BigInteger> _fish = new() { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    private readonly List<long> _fish = new() { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-    public BigInteger Count => _fish.Aggregate<BigInteger, BigInteger>(0, (current, p) => current + p);
+    public long Count => _fish.Aggregate<long, long>(0, (current, p) => current + p);
 
     public void Set(int age, int amount)
     {
