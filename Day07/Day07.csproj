@@ -5,10 +5,11 @@
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <RootNamespace>Day7</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-        <None Update="inputTest">
+        <None Update="testInput">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Update="input">

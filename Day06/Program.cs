@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-
-var input = File.ReadAllText("input");
+﻿var input = File.ReadAllText("input");
 
 var data = input.Split(",").Select(int.Parse).ToList();
 var ages = data.GroupBy(d => d).Select(g => new { Age = g.Key, Count = g.Count() }).ToList();

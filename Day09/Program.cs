@@ -1,10 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-
 void PrintArray(int[,] array, bool[,]? markMap)
 {
     for (var y = 0; y < array.GetLength(1); y++)

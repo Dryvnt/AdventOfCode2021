@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-
-var input = File.ReadAllText("input");
+﻿var input = File.ReadAllText("input");
 var positions = input.Split(',').Select(int.Parse).ToList();
 
 var (part1Target, part1Cost) = CalculateCost(positions, i => i);

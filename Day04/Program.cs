@@ -1,10 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 
 var lines = await File.ReadAllLinesAsync("input");
 
