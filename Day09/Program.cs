@@ -1,6 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-void PrintArray(int[,] array, bool[,]? markMap)
+﻿void PrintArray(int[,] array, bool[,]? markMap)
 {
     for (var y = 0; y < array.GetLength(1); y++)
     {

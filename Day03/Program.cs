@@ -1,4 +1,4 @@
-﻿var lines = await File.ReadAllLinesAsync("input");
+﻿var lines = File.ReadAllLines("input");
 
 var allNumbers = lines.Select(l => Convert.ToInt32(l, 2)).ToList();
 

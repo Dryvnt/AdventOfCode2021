@@ -1,6 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-var lines = await File.ReadAllLinesAsync("input");
+﻿var lines = File.ReadAllLines("input");
 
 var depth = 0;
 var horizontal = 0;

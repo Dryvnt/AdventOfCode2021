@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 
 var inputLines = File.ReadAllLines("input");
-//var inputLines = File.ReadAllLines("testInput");
 
 var lines = new List<Line>();
 

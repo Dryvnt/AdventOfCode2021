@@ -1,8 +1,6 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using System.Diagnostics;
 
-using System.Diagnostics;
-
-var lines = await File.ReadAllLinesAsync("input");
+var lines = File.ReadAllLines("input");
 
 var numbers = lines.First().Split(",").Select(int.Parse).ToList();
 
