@@ -1,26 +1,25 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Immutable;
+using System.Diagnostics;
 
-int AllPaths(Dictionary<string, HashSet<string>> dictionary, Part part)
+int NumberPaths(Dictionary<Node, HashSet<Node>> dictionary, Part part)
 {
     var stack = new Stack<SearchEntry>();
 
-    var specials = new[] { (string?)null };
+    var start = dictionary.Keys.Single(n => n.Name is "start");
+    var end = dictionary.Keys.Single(n => n.Name is "end");
 
-    if (part == Part.Two)
-        specials = specials
-            .Concat(dictionary.Keys.Where(n => n.ToLowerInvariant() == n).Except(new[] { "start", "end" })).ToArray();
+    var startPath = new[] { start }.ToImmutableList();
+    var allLegalVertices = dictionary.Keys.Where(n => n != start).ToImmutableHashSet();
+    stack.Push(new SearchEntry(start, startPath, allLegalVertices, false));
 
-    var startPath = new[] { "start" }.ToList();
-    var allLegalVertices = dictionary.Keys.Except(new[] { "start" }).ToHashSet();
-    stack.Push(new SearchEntry("start", startPath, allLegalVertices, new HashSet<string>(), false));
+    var list = new List<ImmutableList<Node>>();
 
-    var list = new List<List<string>>();
-
+    // Classic depth-first search :)
     while (stack.Any())
     {
         var v = stack.Pop();
 
-        if (v.Node == "end")
+        if (v.Node == end)
         {
             list.Add(v.Path);
             continue;
@@ -33,21 +32,19 @@ int AllPaths(Dictionary<string, HashSet<string>> dictionary, Part part)
         {
             var newLegal = v.LegalMoves;
             var exceptionMade = v.Part2ExceptionMade;
-            var newUsed = v.UsedSmall;
-            if (n.ToLowerInvariant() == n)
+            if (n.Small)
             {
                 switch (part)
                 {
                     case Part.One:
                     case Part.Two when exceptionMade:
-                        newLegal = newLegal.ToHashSet();
-                        newLegal.Remove(n);
+                        newLegal = newLegal.Remove(n);
                         break;
                     case Part.Two:
                     {
                         if (v.Path.Contains(n))
                         {
-                            newLegal = newLegal.Except(newUsed).ToHashSet();
+                            newLegal = newLegal.Except(v.Path.Where(c => c.Small));
                             exceptionMade = true;
                         }
 
@@ -56,14 +53,9 @@ int AllPaths(Dictionary<string, HashSet<string>> dictionary, Part part)
                     default:
                         throw new ArgumentOutOfRangeException(nameof(part), part, null);
                 }
-
-                newUsed = newUsed.ToHashSet();
-                newUsed.Add(n);
             }
 
-            var newPath = v.Path.ToList();
-            newPath.Add(n);
-            stack.Push(new SearchEntry(n, newPath, newLegal, newUsed, exceptionMade));
+            stack.Push(new SearchEntry(n, v.Path.Add(n), newLegal, exceptionMade));
         }
     }
 
@@ -72,35 +64,43 @@ int AllPaths(Dictionary<string, HashSet<string>> dictionary, Part part)
 
 var input = File.ReadAllLines("input");
 
-var adjacencyDict = new Dictionary<string, HashSet<string>>();
+var adjacencyDict = new Dictionary<Node, HashSet<Node>>();
 
 foreach (var line in input)
 {
     var split = line.Split("-");
 
-    var from = split[0];
-    var to = split[1];
+    var fromString = split[0];
+    var from = new Node(fromString, fromString == fromString.ToLowerInvariant());
+    var toString = split[1];
+    var to = new Node(toString, toString == toString.ToLowerInvariant());
 
-    if (!adjacencyDict.ContainsKey(from)) adjacencyDict[from] = new HashSet<string>();
-    if (!adjacencyDict.ContainsKey(to)) adjacencyDict[to] = new HashSet<string>();
+    if (!adjacencyDict.ContainsKey(from)) adjacencyDict[from] = new HashSet<Node>();
+    if (!adjacencyDict.ContainsKey(to)) adjacencyDict[to] = new HashSet<Node>();
 
     adjacencyDict[from].Add(to);
     adjacencyDict[to].Add(from);
 }
 
+// I benchmarked it, and the non-immutable data structures are faster than the
+// immutable ones by a ~30%, but the ergonomics of immutable data structures fit
+// the "build the data structures as we build the search tree" approach better
+// I've satisfied my own curiosity w.r.t. speed and I prefer the cleaner approach since it's fast enough.
 var c = new Stopwatch();
 c.Start();
-Console.WriteLine($"Part 1: {AllPaths(adjacencyDict, Part.One)}");
-Console.WriteLine($"Part 2: {AllPaths(adjacencyDict, Part.Two)}");
+for (var i = 0; i < 1; i++)
+{
+    Console.WriteLine($"Part 1: {NumberPaths(adjacencyDict, Part.One)}");
+    Console.WriteLine($"Part 2: {NumberPaths(adjacencyDict, Part.Two)}");
+}
+
 c.Stop();
 Console.WriteLine($"Elapsed time: {c.Elapsed}");
 
-// I benchmarked it, and the non-immutable data structures are faster than the immutable ones,
-// despite the immutable ergonomics being more intuitive for this sort of "progressively build
-// the data structure down the tree" workflow. Oh well.
-
-internal record SearchEntry(string Node, List<string> Path, HashSet<string> LegalMoves, HashSet<string> UsedSmall,
+internal record SearchEntry(Node Node, ImmutableList<Node> Path, ImmutableHashSet<Node> LegalMoves,
     bool Part2ExceptionMade);
+
+internal record Node(string Name, bool Small);
 
 internal enum Part
 {
