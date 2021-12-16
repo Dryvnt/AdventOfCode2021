@@ -22,9 +22,8 @@ bool[,] Transpose(bool[,] grid)
 {
     var t = new bool[grid.GetLength(1), grid.GetLength(0)];
     for (var x = 0; x < grid.GetLength(0); x++)
-    {
-        for (var y = 0; y < grid.GetLength(1); y++) t[y, x] = grid[x, y];
-    }
+    for (var y = 0; y < grid.GetLength(1); y++)
+        t[y, x] = grid[x, y];
 
     return t;
 }
