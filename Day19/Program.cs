@@ -1,52 +1,106 @@
 ﻿// It really feels like today's task wants matrix math
 // Oh well
 
+using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 
-ScannerCollection ReduceCollections(IEnumerable<Scanner> scanners)
+ScannerCollection ReduceCollections(IReadOnlyCollection<ScannerData> scannerData)
 {
-    var scannerCollections = scanners.Select(s => new ScannerCollection(new List<Scanner> { s })).ToList();
+    var collection = new ScannerCollection(scannerData.First());
 
-    while (scannerCollections.Count > 1)
+    // Pre-transform data
+    var transforms = new Dictionary<int, List<ScannerData>>();
+    foreach (var s in scannerData.Skip(1))
     {
-        var progressMade = false;
+        var l = new List<ScannerData>();
 
-        for (var i = 0; i < scannerCollections.Count - 1; i++)
+        foreach (var f in Enum.GetValues<Facing>())
         {
-            for (var j = i + 1; j < scannerCollections.Count; j++)
+            for (var rot = 0; rot < 4; rot++)
             {
-                var known = scannerCollections[i];
-                var toMerge = scannerCollections[j];
-                Console.WriteLine(
-                    $"Try {string.Join(",", known.Scanners.Select(s => s.Id))} <- {string.Join(",", toMerge.Scanners.Select(s => s.Id))}");
-                var merged = known.MergeWith(toMerge);
-                if (merged is null) continue;
-
-                Console.WriteLine("\tIt worked!");
-                progressMade = true;
-                scannerCollections[i] = merged;
-                scannerCollections.RemoveAt(j);
-                break;
+                var transformedBeacons = s.Beacons.Select(b => b.CorrectFacing(f).MultipleRotate(rot)).ToHashSet();
+                l.Add(new ScannerData(s.Id, transformedBeacons));
             }
-
-            if (progressMade) break;
         }
 
-        if (progressMade) continue;
-
-        //foreach (var s in scannerCollections) Console.WriteLine(s);
-
-        throw new NotImplementedException("heck");
+        transforms[s.Id] = l;
     }
 
-    return scannerCollections.First();
+    var partialOverlaps = new Dictionary<ScannerData, Dictionary<Coordinate, int>>();
+
+    var newBeacons = collection.Beacons.ToHashSet();
+
+    while (transforms.Any())
+    {
+        foreach (var (data, counts) in partialOverlaps)
+        {
+            foreach (var adjust in counts.Keys)
+            {
+                var i = data.CountOverlaps(newBeacons, adjust);
+            }
+        }
+
+        foreach (var b in newBeacons)
+        {
+            foreach (var d in transforms.Values.SelectMany(l => l))
+            {
+                foreach (var toMove in d.Beacons)
+                {
+                    var adjust = b - toMove;
+                    var overlaps = d.CountOverlaps(newBeacons, adjust);
+
+                    if (partialOverlaps.ContainsKey(d) && partialOverlaps[d].ContainsKey(adjust))
+                    {
+                        partialOverlaps[d][adjust] += overlaps;
+                        continue;
+                    }
+
+                    if (overlaps < 2) continue;
+
+                    partialOverlaps[d] = new Dictionary<Coordinate, int>
+                    {
+                        [adjust] = overlaps,
+                    };
+                }
+            }
+        }
+
+        newBeacons.Clear();
+
+        var toRemove = new HashSet<int>();
+
+        foreach (var (data, adjust, count) in partialOverlaps.SelectMany(p =>
+                     p.Value.Select(pp => (p.Key, pp.Key, pp.Value))))
+        {
+            if (count < 12) continue;
+
+            Console.WriteLine($"Merging {data.Id}");
+            var adjusted = data.Adjust(adjust);
+
+            var spill = collection.MergeWith(data, adjust);
+
+            newBeacons.UnionWith(spill);
+            toRemove.Add(data.Id);
+        }
+
+        Debug.Assert(newBeacons.Any());
+
+        foreach (var id in toRemove)
+        {
+            foreach (var d in transforms[id]) partialOverlaps.Remove(d);
+
+            transforms.Remove(id);
+        }
+    }
+
+    return collection;
 }
 
 var input = File.ReadAllText("input");
 const string pattern = @"--- scanner ([0-9]+) ---\n((.+\n)+)";
 
-var scanners = new List<Scanner>();
+var scannerData = new List<ScannerData>();
 foreach (Match m in Regex.Matches(input, pattern))
 {
     var id = int.Parse(m.Groups[1].Value);
@@ -57,12 +111,12 @@ foreach (Match m in Regex.Matches(input, pattern))
         return new Coordinate(values[0], values[1], values[2]);
     }).ToHashSet();
 
-    scanners.Add(new Scanner(id, new Coordinate(0, 0, 0), beacons));
+    scannerData.Add(new ScannerData(id, beacons));
 }
 
-var collection = ReduceCollections(scanners);
+var collection = ReduceCollections(scannerData);
 
-Console.WriteLine($"Part 1: {collection.KnownBeacons().Count}");
+Console.WriteLine($"Part 1: {collection.Beacons.Count}");
 
 var maxDistance = 0;
 for (var i = 0; i < collection.Scanners.Count - 1; i++)
@@ -77,69 +131,28 @@ for (var i = 0; i < collection.Scanners.Count - 1; i++)
 Console.WriteLine($"Part 2: {maxDistance}");
 
 
-internal record ScannerCollection(List<Scanner> Scanners)
+internal class ScannerCollection
 {
-    private HashSet<Coordinate>? _knownBeacons;
-
-    public HashSet<Coordinate> KnownBeacons()
+    public ScannerCollection(ScannerData scanner0)
     {
-        if (_knownBeacons is not null) return _knownBeacons;
-
-        var knownBeacons = new HashSet<Coordinate>();
-        foreach (var beacons in Scanners.Select(s => s.Beacons)) knownBeacons.UnionWith(beacons);
-
-        _knownBeacons = knownBeacons;
-        return _knownBeacons;
-    }
-
-    // other's positions are adjusted
-    public ScannerCollection? MergeWith(ScannerCollection other)
-    {
-        var knownBeacons = KnownBeacons();
-        foreach (var f in Enum.GetValues<Facing>())
+        Scanners = new List<Scanner>
         {
-            for (var rotations = 1; rotations <= 4; rotations++)
-            {
-                var correctedOther = other.CorrectFacing(f, rotations);
-                var correctedKnown = correctedOther.KnownBeacons();
-                foreach (var reference in knownBeacons)
-                {
-                    foreach (var adjust in correctedKnown)
-                    {
-                        var adjustBy = reference - adjust;
-                        var adjustedOther = correctedOther.Adjust(adjustBy);
-                        var adjustedKnown = adjustedOther.KnownBeacons();
-
-                        var overlap = knownBeacons.Intersect(adjustedKnown).ToHashSet();
-
-                        if (overlap.Count is > 2 and < 12)
-                        {
-                            //Console.WriteLine($"Almost: {overlap.Count}");
-                            //Console.WriteLine(adjustedOther);
-                            //Console.WriteLine(string.Join("\n", overlap));
-                            //Console.WriteLine($"{reference} - {adjust} = {adjustBy}");
-                        }
-
-                        if (overlap.Count < 12) continue;
-
-                        var allScanners = Scanners.Concat(adjustedOther.Scanners).ToList();
-                        return new ScannerCollection(allScanners);
-                    }
-                }
-            }
-        }
-
-        return null;
+            new(scanner0.Id, new Coordinate(0, 0, 0)),
+        };
+        Beacons = scanner0.Beacons.ToHashSet();
     }
 
-    private ScannerCollection Adjust(Coordinate by)
-    {
-        return new ScannerCollection(Scanners.Select(s => s.Adjust(by)).ToList());
-    }
+    public List<Scanner> Scanners { get; init; }
+    public HashSet<Coordinate> Beacons { get; init; }
 
-    public ScannerCollection CorrectFacing(Facing f, int rotations)
+    // returns new coordinates that weren't in set before
+    public HashSet<Coordinate> MergeWith(ScannerData other, Coordinate adjust)
     {
-        return new ScannerCollection(Scanners.Select(s => s.CorrectFacing(f, rotations)).ToList());
+        Scanners.Add(new Scanner(other.Id, adjust));
+        var adjusted = other.Adjust(adjust).ToHashSet();
+        var spill = adjusted.Except(Beacons).ToHashSet();
+        Beacons.UnionWith(adjusted);
+        return spill;
     }
 
     public override string ToString()
@@ -148,29 +161,47 @@ internal record ScannerCollection(List<Scanner> Scanners)
         s.Append("Scanner Collection\n");
         foreach (var scanner in Scanners) s.Append($"\t{scanner}\n");
 
-        var beaconStrings = KnownBeacons().OrderBy(b => b).Select(b => $"\tBeacon {b}");
+        var beaconStrings = Beacons.OrderBy(b => b).Select(b => $"\tBeacon {b}");
         s.Append(string.Join("\n", beaconStrings));
         return s.ToString();
     }
+
+    public void Deconstruct(out List<Scanner> Scanners, out HashSet<Coordinate> Beacons)
+    {
+        Scanners = this.Scanners;
+        Beacons = this.Beacons;
+    }
 }
 
-internal record Scanner(int Id, Coordinate Position, HashSet<Coordinate> Beacons)
+internal class ScannerData
 {
-    public Scanner CorrectFacing(Facing f, int rotations)
+    public ScannerData(int id, IReadOnlySet<Coordinate> beacons)
     {
-        var transformedPosition = Position.CorrectFacing(f).MultipleRotate(rotations);
-        var transformedBeacons = Beacons.Select(b => b.CorrectFacing(f).MultipleRotate(rotations)).ToHashSet();
-        return new Scanner(Id, transformedPosition, transformedBeacons);
+        Id = id;
+        Beacons = beacons;
     }
 
-    public Scanner Adjust(Coordinate by)
-    {
-        var adjustedPosition = Position + by;
-        var adjustedSet = Beacons.Select(b => b + by).ToHashSet();
+    public int Id { get; }
+    public IReadOnlySet<Coordinate> Beacons { get; }
 
-        return new Scanner(Id, adjustedPosition, adjustedSet);
+    public int CountOverlaps(IEnumerable<Coordinate> other, Coordinate adjustBy)
+    {
+        return Adjust(adjustBy).Intersect(other).Count();
     }
 
+    public IEnumerable<Coordinate> Adjust(Coordinate by)
+    {
+        return Beacons.Select(b => b + by);
+    }
+
+    public override string ToString()
+    {
+        return $"Scanner {Id}";
+    }
+}
+
+internal readonly record struct Scanner(int Id, Coordinate Position)
+{
     public override string ToString()
     {
         return $"{nameof(Scanner)} {Id}, {Position}";
@@ -187,21 +218,18 @@ internal enum Facing
     NegativeZ,
 }
 
-internal record Coordinate(int X, int Y, int Z) : IComparable<Coordinate>, IComparable
+internal readonly record struct Coordinate(int X, int Y, int Z) : IComparable<Coordinate>, IComparable
 {
     public int CompareTo(object? obj)
     {
         if (ReferenceEquals(null, obj)) return 1;
-        if (ReferenceEquals(this, obj)) return 0;
         return obj is Coordinate other
             ? CompareTo(other)
             : throw new ArgumentException($"Object must be of type {nameof(Coordinate)}");
     }
 
-    public int CompareTo(Coordinate? other)
+    public int CompareTo(Coordinate other)
     {
-        if (ReferenceEquals(this, other)) return 0;
-        if (ReferenceEquals(null, other)) return 1;
         var xComparison = X.CompareTo(other.X);
         if (xComparison != 0) return xComparison;
         var yComparison = Y.CompareTo(other.Y);
