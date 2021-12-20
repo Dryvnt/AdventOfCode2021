@@ -20,7 +20,6 @@ var enhanced = Enumerable.Range(0, 50).Aggregate(image, (i, _) => i.Enhance(tabl
 
 Console.WriteLine($"Part 2: {enhanced.CountOnes()}");
 
-
 internal readonly record struct Image(bool[,] Inner, bool Outside)
 {
     private bool Index(int x, int y)
@@ -55,6 +54,47 @@ internal readonly record struct Image(bool[,] Inner, bool Outside)
         return Inner.Cast<bool>().Select(b => b ? 1L : 0L).Sum();
     }
 
+    public Image Trim()
+    {
+        var leftMargin = -1;
+        var rightMargin = 0;
+        for (var x = 0; x < Inner.GetLength(0); x++)
+        {
+            for (var y = 0; y < Inner.GetLength(1); y++)
+            {
+                if (Inner[x, y] == Outside) continue;
+
+                if (leftMargin == -1) leftMargin = x;
+                rightMargin = x + 1;
+            }
+        }
+
+
+        var topMargin = -1;
+        var bottomMargin = 0;
+        for (var y = 0; y < Inner.GetLength(1); y++)
+        {
+            for (var x = 0; x < Inner.GetLength(0); x++)
+            {
+                if (Inner[x, y] == Outside) continue;
+
+                if (topMargin == -1) topMargin = y;
+                bottomMargin = y + 1;
+            }
+        }
+
+        var newWidth = rightMargin - leftMargin;
+        var newHeight = bottomMargin - topMargin;
+        var newInner = new bool[newWidth, newHeight];
+
+        for (var x = 0; x < newInner.GetLength(0); x++)
+        {
+            for (var y = 0; y < newInner.GetLength(1); y++) newInner[x, y] = Inner[x + leftMargin, y + topMargin];
+        }
+
+        return new Image(newInner, Outside);
+    }
+
     public Image Enhance(bool[] table)
     {
         var newWidth = Inner.GetLength(0) + 2;
@@ -65,9 +105,9 @@ internal readonly record struct Image(bool[,] Inner, bool Outside)
         for (var x = 0; x < newWidth; x++)
             newImage[x, y] = table[GetValue(x - 1, y - 1)];
 
-        var newOutside = table[GetValue(-3, -3)];
+        var newOutside = Outside ? table[511] : table[0];
 
-        return new Image(newImage, newOutside);
+        return new Image(newImage, newOutside).Trim();
     }
 
     public static Image Parse(bool[] table, string[] input)
@@ -98,9 +138,9 @@ internal readonly record struct Image(bool[,] Inner, bool Outside)
         var s = new StringBuilder();
 
         s.Append($"Outside: {CharMap(Outside)}\n");
-        for (var y = -2; y < Inner.GetLength(1) + 2; y++)
+        for (var y = 0; y < Inner.GetLength(1); y++)
         {
-            for (var x = -2; x < Inner.GetLength(0) + 2; x++) s.Append(CharMap(Index(x, y)));
+            for (var x = 0; x < Inner.GetLength(0); x++) s.Append(CharMap(Index(x, y)));
 
             s.Append('\n');
         }
