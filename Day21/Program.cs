@@ -1,4 +1,6 @@
-﻿int PlayDeterministic(Player player1, Player player2, int goal)
+﻿using System.Numerics;
+
+int PlayDeterministic(Player player1, Player player2, int goal)
 {
     var rolls = 0;
     while (true)
@@ -36,16 +38,12 @@ internal class MemoizedDirac
 {
     private readonly Dictionary<(Player, Player, int), DiracResult> _cache = new();
 
-    private readonly (int Roll, long Count)[] _rolls =
+    private readonly RollInformation[] _rolls;
+
+    public MemoizedDirac(int sides = 3)
     {
-        (3, 1),
-        (4, 3),
-        (5, 6),
-        (6, 7),
-        (7, 6),
-        (8, 3),
-        (9, 1),
-    };
+        _rolls = RollInformation.GenerateTable(sides);
+    }
 
     public int Count => _cache.Count;
 
@@ -53,8 +51,8 @@ internal class MemoizedDirac
     {
         if (_cache.TryGetValue((player1, player2, goal), out var cache)) return cache;
 
-        var player1Wins = 0L;
-        var player2Wins = 0L;
+        var player1Wins = new BigInteger(0);
+        var player2Wins = new BigInteger(0);
 
         foreach (var (roll, count) in _rolls)
         {
@@ -101,4 +99,38 @@ internal readonly record struct Player(int Position, int Score = 0)
     }
 }
 
-internal readonly record struct DiracResult(long Player1Wins, long Player2Wins);
+// 64 bit integers are enough for baseline problem, but BigIntegers are necessary
+// if we want to play around with more dice faces and/or higher score goals
+internal readonly record struct DiracResult(BigInteger Player1Wins, BigInteger Player2Wins);
+
+internal readonly record struct RollInformation(int Roll, BigInteger Count)
+{
+    // This is entirely unnecessary. We could (and did!) just hardcode this table for sides=3
+    // But I like having it, and it's my code. You can't stop me! >:)
+    public static RollInformation[] GenerateTable(int sides)
+    {
+        var sums = new Dictionary<int, BigInteger>
+        {
+            [0] = 1L,
+        };
+
+        for (var i = 0; i < sides; i++)
+        {
+            var newSums = new Dictionary<int, BigInteger>();
+
+            foreach (var (oldSum, oldCount) in sums)
+            {
+                for (var face = 1; face <= sides; face++)
+                {
+                    var newSum = oldSum + face;
+                    newSums.TryGetValue(newSum, out var count);
+                    newSums[newSum] = oldCount + count;
+                }
+            }
+
+            sums = newSums;
+        }
+
+        return sums.Select(kvp => new RollInformation(kvp.Key, kvp.Value)).ToArray();
+    }
+}
