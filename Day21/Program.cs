@@ -63,10 +63,7 @@ internal class MemoizedDirac
                 continue;
             }
 
-            var minScore = Math.Min(afterRoll.Score, player2.Score);
-
-            // Note: players are flipped in sub-game!
-            var subGameResult = PlayDirac(player2.SubScore(minScore), afterRoll.SubScore(minScore), goal - minScore);
+            var subGameResult = PlayDirac(player2, afterRoll, goal);
 
             player1Wins += subGameResult.Player2Wins * count;
             player2Wins += subGameResult.Player1Wins * count;
@@ -88,14 +85,6 @@ internal readonly record struct Player(int Position, int Score = 0)
         var newScore = Score + newPos + 1;
 
         return new Player(newPos, newScore);
-    }
-
-    public Player SubScore(int sub)
-    {
-        return this with
-        {
-            Score = Score - sub,
-        };
     }
 }
 
