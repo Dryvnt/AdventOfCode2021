@@ -23,42 +23,36 @@ public class SmartReactor : IReactor
             var overlap = overlapping.GetOverlap(cuboid);
             if (overlap == overlapping) continue;
 
-            Cuboid[] split;
-            int i;
+            Cuboid first;
+            Cuboid second;
             if (overlapping.X.Min < overlap.X.Min)
             {
-                split = overlapping.SplitX(overlap.X.Min);
-                i = 0;
+                (first, second) = overlapping.SplitX(overlap.X.Min);
             }
             else if (overlap.X.Max < overlapping.X.Max)
             {
-                split = overlapping.SplitX(overlap.X.Max);
-                i = 1;
+                (second, first) = overlapping.SplitX(overlap.X.Max);
             }
             else if (overlapping.Y.Min < overlap.Y.Min)
             {
-                split = overlapping.SplitY(overlap.Y.Min);
-                i = 0;
+                (first, second) = overlapping.SplitY(overlap.Y.Min);
             }
             else if (overlap.Y.Max < overlapping.Y.Max)
             {
-                split = overlapping.SplitY(overlap.Y.Max);
-                i = 1;
+                (second, first) = overlapping.SplitY(overlap.Y.Max);
             }
             else if (overlapping.Z.Min < overlap.Z.Min)
             {
-                split = overlapping.SplitZ(overlap.Z.Min);
-                i = 0;
+                (first, second) = overlapping.SplitZ(overlap.Z.Min);
             }
             else if (overlap.Z.Max < overlapping.Z.Max)
             {
-                split = overlapping.SplitZ(overlap.Z.Max);
-                i = 1;
+                (second, first) = overlapping.SplitZ(overlap.Z.Max);
             }
             else throw new NotImplementedException();
 
-            _cuboids.Add(split[i]);
-            overlapSet.Push(split[1 - i]);
+            _cuboids.Add(first);
+            overlapSet.Push(second);
         }
 
         if (instruction.On) _cuboids.Add(cuboid);

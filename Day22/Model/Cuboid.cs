@@ -1,4 +1,6 @@
-﻿namespace Day22.Model;
+﻿using System.Runtime.CompilerServices;
+
+namespace Day22.Model;
 
 public readonly record struct Cuboid(Range X, Range Y, Range Z)
 {
@@ -14,12 +16,8 @@ public readonly record struct Cuboid(Range X, Range Y, Range Z)
         return new Cuboid(x, y, z);
     }
 
-    public bool Overlaps(Cuboid other)
-    {
-        return GetOverlap(other).Size > 0;
-    }
-
-    public Cuboid GetOverlap(Cuboid other)
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private (Range, Range, Range) OverlapRanges(Cuboid other)
     {
         var xMin = Math.Max(X.Min, other.X.Min);
         var xMax = Math.Min(X.Max, other.X.Max);
@@ -28,13 +26,29 @@ public readonly record struct Cuboid(Range X, Range Y, Range Z)
         var zMin = Math.Max(Z.Min, other.Z.Min);
         var zMax = Math.Min(Z.Max, other.Z.Max);
 
-        return new Cuboid(new Range(xMin, xMax), new Range(yMin, yMax), new Range(zMin, zMax));
+        return (new Range(xMin, xMax), new Range(yMin, yMax), new Range(zMin, zMax));
     }
 
-    public Cuboid[] SplitX(int x)
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public bool Overlaps(Cuboid other)
     {
-        return new[]
-        {
+        var ((xMin, xMax), (yMin, yMax), (zMin, zMax)) = OverlapRanges(other);
+        var xOverlaps = xMin < X.Max && X.Min < xMax;
+        var yOverlaps = yMin < Y.Max && Y.Min < yMax;
+        var zOverlaps = zMin < Z.Max && Z.Min < zMax;
+        return xOverlaps && yOverlaps && zOverlaps;
+    }
+
+    public Cuboid GetOverlap(Cuboid other)
+    {
+        var (xRange, yRange, zRange) = OverlapRanges(other);
+
+        return new Cuboid(xRange, yRange, zRange);
+    }
+
+    public (Cuboid, Cuboid) SplitX(int x)
+    {
+        return (
             this with
             {
                 X = new Range(X.Min, x),
@@ -42,14 +56,12 @@ public readonly record struct Cuboid(Range X, Range Y, Range Z)
             this with
             {
                 X = new Range(x, X.Max),
-            },
-        };
+            });
     }
 
-    public Cuboid[] SplitY(int y)
+    public (Cuboid, Cuboid) SplitY(int y)
     {
-        return new[]
-        {
+        return (
             this with
             {
                 Y = new Range(Y.Min, y),
@@ -57,14 +69,12 @@ public readonly record struct Cuboid(Range X, Range Y, Range Z)
             this with
             {
                 Y = new Range(y, Y.Max),
-            },
-        };
+            });
     }
 
-    public Cuboid[] SplitZ(int z)
+    public (Cuboid, Cuboid) SplitZ(int z)
     {
-        return new[]
-        {
+        return (
             this with
             {
                 Z = new Range(Z.Min, z),
@@ -72,7 +82,6 @@ public readonly record struct Cuboid(Range X, Range Y, Range Z)
             this with
             {
                 Z = new Range(z, Z.Max),
-            },
-        };
+            });
     }
 }

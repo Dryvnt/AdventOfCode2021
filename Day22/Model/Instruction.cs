@@ -1,6 +1,6 @@
 ﻿namespace Day22.Model;
 
-public record struct Instruction(bool On, Cuboid Cuboid)
+public record Instruction(bool On, Cuboid Cuboid)
 {
     public static Instruction Parse(string input)
     {

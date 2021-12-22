@@ -1,4 +1,5 @@
-﻿using Day22.Model;
+﻿using System.Diagnostics;
+using Day22.Model;
 using Day22.Model.Reactor;
 
 var input = File.ReadAllLines("input");
@@ -16,5 +17,21 @@ Console.WriteLine($"Part 1: {part1Reactor.CountOn()}");
 
 var part2Reactor = new SmartReactor();
 foreach (var i in instructions) part2Reactor.Mark(i);
-
 Console.WriteLine($"Part 2: {part2Reactor.CountOn()}");
+
+Console.WriteLine();
+Console.WriteLine("Taking runtime samples");
+var timer = new Stopwatch();
+timer.Start();
+const int totalRuns = 300;
+for (var j = 0; j < totalRuns; j++)
+{
+    var timerReactor = new SmartReactor();
+    foreach (var i in instructions) timerReactor.Mark(i);
+    var _ = timerReactor.CountOn();
+}
+
+timer.Stop();
+
+Console.WriteLine(
+    $"\tElapsed: {totalRuns} part 2 runs in {timer.Elapsed.TotalMilliseconds} ms ({timer.Elapsed.TotalMilliseconds / totalRuns} ms per run)");

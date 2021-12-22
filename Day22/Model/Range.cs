@@ -12,9 +12,4 @@ public readonly record struct Range(int Min, int Max)
 
         return new Range(min, max);
     }
-
-    public bool Contains(int c)
-    {
-        return Min <= c && c < Max;
-    }
 }

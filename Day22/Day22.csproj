@@ -13,8 +13,4 @@
         </None>
     </ItemGroup>
 
-    <ItemGroup>
-        <Folder Include="Reactor"/>
-    </ItemGroup>
-
 </Project>
