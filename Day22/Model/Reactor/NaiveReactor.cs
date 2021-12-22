@@ -1,6 +1,4 @@
-﻿using Day22.Reactor;
-
-namespace Day22;
+﻿namespace Day22.Model.Reactor;
 
 // Useful as a comparison in tests
 public class NaiveReactor : IReactor

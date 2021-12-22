@@ -2,8 +2,8 @@
 using System.IO;
 using System.Linq;
 using System.Text;
-using Day22;
-using Day22.Reactor;
+using Day22.Model;
+using Day22.Model.Reactor;
 using Xunit;
 using Xunit.Abstractions;
 

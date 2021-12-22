@@ -1,6 +1,4 @@
-﻿using Day22.Model;
-
-namespace Day22;
+﻿namespace Day22.Model;
 
 public record struct Instruction(bool On, Cuboid Cuboid)
 {

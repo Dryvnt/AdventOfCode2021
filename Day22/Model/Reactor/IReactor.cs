@@ -1,4 +1,4 @@
-﻿namespace Day22.Reactor;
+﻿namespace Day22.Model.Reactor;
 
 public interface IReactor
 {

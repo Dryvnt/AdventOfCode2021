@@ -1,4 +1,4 @@
-﻿namespace Day22;
+﻿namespace Day22.Model;
 
 public readonly record struct Range(int Min, int Max)
 {

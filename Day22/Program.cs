@@ -1,4 +1,5 @@
-﻿using Day22;
+﻿using Day22.Model;
+using Day22.Model.Reactor;
 
 var input = File.ReadAllLines("input");
 

@@ -1,7 +1,4 @@
-﻿using Day22.Model;
-using Day22.Reactor;
-
-namespace Day22;
+﻿namespace Day22.Model.Reactor;
 
 public class SmartReactor : IReactor
 {
