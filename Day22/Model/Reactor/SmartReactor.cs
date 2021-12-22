@@ -15,10 +15,11 @@ public class SmartReactor : IReactor
 
         var overlapSet = new Stack<Cuboid>(_cuboids.Where(c => cuboid.Overlaps(c)));
 
+        foreach (var c in overlapSet) _cuboids.Remove(c);
+
         while (overlapSet.Any())
         {
             var overlapping = overlapSet.Pop();
-            _cuboids.Remove(overlapping);
 
             var overlap = overlapping.GetOverlap(cuboid);
             if (overlap == overlapping) continue;
