@@ -1,4 +1,6 @@
-﻿namespace Day22.Model.Reactor;
+﻿using System.Runtime.CompilerServices;
+
+namespace Day22.Model.Reactor;
 
 public class SmartReactor : IReactor
 {
@@ -6,9 +8,10 @@ public class SmartReactor : IReactor
 
     public long CountOn()
     {
-        return _cuboids.Select(c => c.Size).Sum();
+        return _cuboids.Sum(c => c.Size);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Mark(Instruction instruction)
     {
         var cuboid = instruction.Cuboid;

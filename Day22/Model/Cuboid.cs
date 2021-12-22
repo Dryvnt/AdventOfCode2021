@@ -17,7 +17,17 @@ public readonly record struct Cuboid(Range X, Range Y, Range Z)
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private (Range, Range, Range) OverlapRanges(Cuboid other)
+    public bool Overlaps(Cuboid other)
+    {
+        var ((xMin, xMax), (yMin, yMax), (zMin, zMax)) = other;
+        var xOverlaps = xMin < X.Max && X.Min < xMax;
+        var yOverlaps = yMin < Y.Max && Y.Min < yMax;
+        var zOverlaps = zMin < Z.Max && Z.Min < zMax;
+        return xOverlaps && yOverlaps && zOverlaps;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Cuboid GetOverlap(Cuboid other)
     {
         var xMin = Math.Max(X.Min, other.X.Min);
         var xMax = Math.Min(X.Max, other.X.Max);
@@ -26,24 +36,7 @@ public readonly record struct Cuboid(Range X, Range Y, Range Z)
         var zMin = Math.Max(Z.Min, other.Z.Min);
         var zMax = Math.Min(Z.Max, other.Z.Max);
 
-        return (new Range(xMin, xMax), new Range(yMin, yMax), new Range(zMin, zMax));
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public bool Overlaps(Cuboid other)
-    {
-        var ((xMin, xMax), (yMin, yMax), (zMin, zMax)) = OverlapRanges(other);
-        var xOverlaps = xMin < X.Max && X.Min < xMax;
-        var yOverlaps = yMin < Y.Max && Y.Min < yMax;
-        var zOverlaps = zMin < Z.Max && Z.Min < zMax;
-        return xOverlaps && yOverlaps && zOverlaps;
-    }
-
-    public Cuboid GetOverlap(Cuboid other)
-    {
-        var (xRange, yRange, zRange) = OverlapRanges(other);
-
-        return new Cuboid(xRange, yRange, zRange);
+        return new Cuboid(new Range(xMin, xMax), new Range(yMin, yMax), new Range(zMin, zMax));
     }
 
     public (Cuboid, Cuboid) SplitX(int x)
