@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Day23;
 
-public struct State : IEquatable<State>
+public readonly struct State : IEquatable<State>
 {
     private readonly char[] _hallway = { '.', '.', '.', '.', '.', '.', '.' };
     private readonly char[][] _rooms = new char[4][];
@@ -73,23 +73,12 @@ public struct State : IEquatable<State>
     };
 
     // Moves from the top-most square of the room (not the one inside the hallway)
-    private static readonly int[][] RoomIntoHallwayDistance =
+    private static readonly int[,] RoomIntoHallwayDistance =
     {
-        new[] { 3, 2, 2, 4, 6, 8, 9 },
-        new[] { 5, 4, 2, 2, 4, 6, 7 },
-        new[] { 7, 6, 4, 2, 2, 4, 5 },
-        new[] { 9, 8, 6, 4, 2, 2, 3 },
-    };
-
-    private static readonly HashSet<int>[] ImmediatelyAccessibleRooms =
-    {
-        new(),
-        new() { 0 },
-        new() { 0, 1 },
-        new() { 1, 2 },
-        new() { 2, 3 },
-        new() { 3 },
-        new(),
+        { 3, 2, 2, 4, 6, 8, 9 },
+        { 5, 4, 2, 2, 4, 6, 7 },
+        { 7, 6, 4, 2, 2, 4, 5 },
+        { 9, 8, 6, 4, 2, 2, 3 },
     };
 
     private bool RoomAvailable(int room)
@@ -153,7 +142,7 @@ public struct State : IEquatable<State>
         var hallwayCopy = _hallway.ToArray();
         hallwayCopy[hallway] = '.';
 
-        var distanceMoved = RoomIntoHallwayDistance[room][hallway];
+        var distanceMoved = RoomIntoHallwayDistance[room, hallway];
 
         var roomsCopy = _rooms.ToArray();
         var roomCopy = roomsCopy[room].ToArray();
@@ -235,7 +224,7 @@ public struct State : IEquatable<State>
             var hallwayCopy = _hallway.ToArray();
             hallwayCopy[hallway] = toMove;
 
-            var distance = RoomIntoHallwayDistance[room][hallway];
+            var distance = RoomIntoHallwayDistance[room, hallway];
             distance += index;
 
             yield return new Move(new State(hallwayCopy, roomsCopy), CostMap[toMove] * distance);
