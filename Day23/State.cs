@@ -162,7 +162,7 @@ public readonly struct State : IEquatable<State>
     private bool RoomDone(int i)
     {
         var room = _rooms[i];
-        var correct = CorrectOccupant.First();
+        var correct = CorrectOccupant[i];
         return room.All(c => c == correct);
     }
 
